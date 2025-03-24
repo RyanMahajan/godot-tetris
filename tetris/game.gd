@@ -1,28 +1,54 @@
 extends Node2D
 
-@export var tetris_grid: TetrisGrid
-@export var tetrimino_scene: PackedScene  # Reference to the Tetrimino scene
 @export var tetrimino_timer: Timer
 
-
+var tetris_grid: TetrisGrid
 var current_tetrimino: Tetrimino
 
 func _ready():
 	if not tetris_grid:
 		tetris_grid = TetrisGrid.new()
-	tetrimino_timer.timeout.connect(_on_tetrimino_timer_timeout) # Connect the Timer node
-	queue_redraw()  # Trigger redraw
+	tetrimino_timer.timeout.connect(_on_tetrimino_timer) # Connect the Timer node
 	spawn_new_tetrimino()  # Spawn the first Tetrimino
+	queue_redraw()  # Trigger redraw
 
-func _on_tetrimino_timer_timeout():
+func _on_tetrimino_timer():
 	if current_tetrimino:
-		if not check_collision(current_tetrimino, Vector2(0, 1)):  # Check if it can move down
+		if check_collision(current_tetrimino, Vector2(0, 1)):  # Check if it can move down
 			lock_tetrimino(current_tetrimino)  # Lock the Tetrimino if it can't move down
 			spawn_new_tetrimino()  # Spawn a new Tetrimino
 		else:
-			current_tetrimino.position.y += 1  # Move the Tetrimino down
+			current_tetrimino.move(Vector2.DOWN)  # Move the Tetrimino down
 
 		queue_redraw()  # Redraw the grid with the new position
+
+func _unhandled_input(event):
+	if not current_tetrimino:
+		return
+
+	# Move left
+	if event.is_action_pressed("Left"):
+		if not check_collision(current_tetrimino, Vector2(-1, 0)):
+			current_tetrimino.move(Vector2.LEFT)
+	
+	# Move right
+	elif event.is_action_pressed("Right"):
+		if not check_collision(current_tetrimino, Vector2(1, 0)):
+			current_tetrimino.move(Vector2.RIGHT)
+
+	# Soft drop
+	elif event.is_action_pressed("Down"):
+		if not check_collision(current_tetrimino, Vector2(0, 1)):
+			current_tetrimino.move(Vector2.DOWN)
+
+	# Rotate clockwise
+	elif event.is_action_pressed("Rotate"):
+		current_tetrimino.rotate()
+
+	# Redraw after movement
+	queue_redraw()
+
+
 
 func _draw():
 	if not tetris_grid:
@@ -75,7 +101,7 @@ func check_collision(tetrimino: Tetrimino, movement: Vector2) -> bool:
 
 				# Check if the new position is within grid bounds first
 				if new_x < 0 or new_x >= tetris_grid.GRID_WIDTH or new_y < 0 or new_y >= tetris_grid.GRID_HEIGHT:
-					return false  # Out of bounds, collision
+					return true  # Out of bounds, collision
 
 				# If moving down, only check the bottommost row
 				if movement.y > 0:
@@ -83,14 +109,13 @@ func check_collision(tetrimino: Tetrimino, movement: Vector2) -> bool:
 					if y == tetrimino.shape[x].size() - 1:  # Bottom row
 						# Check for collision with an existing block
 						if tetris_grid.grid[new_y][new_x] != null:
-							return false  # Collision detected
+							return true  # Collision detected
 				else:
 					# If not moving down, check all rows (for left/right movement)
 					if tetris_grid.grid[new_y][new_x] != null:
-						return false  # Collision detected
+						return true  # Collision detected
 
-	return true  # No collision
-
+	return false  # No collisionsssss
 
 # Lock the Tetrimino in place
 func lock_tetrimino(tetrimino: Tetrimino):
@@ -100,3 +125,10 @@ func lock_tetrimino(tetrimino: Tetrimino):
 				var grid_x = tetrimino.position.x + x
 				var grid_y = tetrimino.position.y + y
 				tetris_grid.grid[grid_y][grid_x] = 1  # Mark the grid position as occupied
+				check_row(grid_y)
+
+func check_row(y: int):
+	for x in range(tetris_grid.GRID_WIDTH):
+		if tetris_grid.grid[y][x] == null:
+			return
+	tetris_grid.clear_row(y)

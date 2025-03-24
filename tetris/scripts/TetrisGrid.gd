@@ -26,5 +26,9 @@ func set_cell(x: int, y: int, value):
 		grid[y][x] = value
 
 func clear_row(y: int):
-	grid.remove_at(y)
-	grid.insert(0, [null] * GRID_WIDTH)  # Insert empty row at the top
+	grid.remove_at(y)  # Remove the completed row
+	grid.insert(0, [])  # Insert a new empty row
+
+	# Refill the new row with unique `null` values
+	for i in range(GRID_WIDTH):
+		grid[0].append(null)

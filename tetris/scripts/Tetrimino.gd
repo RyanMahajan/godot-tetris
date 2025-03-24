@@ -21,17 +21,37 @@ func _init():
 
 # Method to rotate the shape 90 degrees
 func rotate():
+	var old_shape = shape.duplicate(true)
+	var old_width = shape[0].size()
+	var old_height = shape.size()
+
+	# Compute center offset
+	var center_x = floor(old_width / 2.0)
+	var center_y = floor(old_height / 2.0)
+
+	# Create an empty 2D array with swapped dimensions
+	var new_width = old_height
+	var new_height = old_width
 	var new_shape = []
-	
-	# Transpose the shape (swap rows and columns)
-	for y in range(shape[0].size()):
-		var new_row = []
-		for x in range(shape.size()):
-			new_row.append(shape[x][y])  # Copy values by transposing
-		new_shape.append(new_row)
+	for _i in range(new_height):
+		new_shape.append([])
 
-	# Reverse each row to complete the 90-degree rotation
-	for i in range(new_shape.size()):
-		new_shape[i] = new_shape[i].reversed()
+	# Rotate 90 degrees clockwise
+	for y in range(old_height):
+		for x in range(old_width):
+			new_shape[x].insert(0, shape[y][x])
 
-	shape = new_shape  # Update the shape to the new rotated shape
+	# Compute new center after rotation
+	var new_center_x = floor(new_width / 2.0)
+	var new_center_y = floor(new_height / 2.0)
+
+	# Adjust position to keep the center aligned
+	position.x += center_x - new_center_x
+	position.y += center_y - new_center_y
+
+	# Apply the new shape
+	shape = new_shape
+
+
+func move(direction: Vector2):
+	position += direction
