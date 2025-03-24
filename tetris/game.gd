@@ -2,20 +2,23 @@ extends Node2D
 
 @export var tetris_grid: TetrisGrid
 @export var tetrimino_scene: PackedScene  # Reference to the Tetrimino scene
+@export var tetrimino_timer: Timer
+
 
 var current_tetrimino: Tetrimino
 
 func _ready():
 	if not tetris_grid:
 		tetris_grid = TetrisGrid.new()
+	tetrimino_timer.timeout.connect(_on_tetrimino_timer_timeout) # Connect the Timer node
 	queue_redraw()  # Trigger redraw
 	spawn_new_tetrimino()  # Spawn the first Tetrimino
 
-func _physics_process(delta: float):
+func _on_tetrimino_timer_timeout():
 	if current_tetrimino:
 		if not check_collision(current_tetrimino, Vector2(0, 1)):  # Check if it can move down
 			lock_tetrimino(current_tetrimino)  # Lock the Tetrimino if it can't move down
-			#spawn_new_tetrimino()  # Spawn a new Tetrimino
+			spawn_new_tetrimino()  # Spawn a new Tetrimino
 		else:
 			current_tetrimino.position.y += 1  # Move the Tetrimino down
 
@@ -94,6 +97,6 @@ func lock_tetrimino(tetrimino: Tetrimino):
 	for x in range(tetrimino.shape.size()):
 		for y in range(tetrimino.shape[x].size()):
 			if tetrimino.shape[x][y] == 1:
-				var grid_x = tetrimino.position.x
-				var grid_y = tetrimino.position.y
+				var grid_x = tetrimino.position.x + x
+				var grid_y = tetrimino.position.y + y
 				tetris_grid.grid[grid_y][grid_x] = 1  # Mark the grid position as occupied

@@ -2,5 +2,9 @@
 
 [ext_resource type="Script" path="res://game.gd" id="1_nyj1x"]
 
-[node name="Game" type="Node2D"]
+[node name="Game" type="Node2D" node_paths=PackedStringArray("tetrimino_timer")]
 script = ExtResource("1_nyj1x")
+tetrimino_timer = NodePath("Timer")
+
+[node name="Timer" type="Timer" parent="."]
+autostart = true
